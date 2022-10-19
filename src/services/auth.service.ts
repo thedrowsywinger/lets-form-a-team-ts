@@ -1,8 +1,8 @@
 import { compare, hash } from "bcrypt";
-import bcrypt = require("bcryptjs");
+import bcrypt = require("bcrypt");
 import jwt = require("jsonwebtoken");
 import { sign } from "jsonwebtoken";
-import { SECRET_KEY } from "@config";
+import { JWT_SECRET_KEY } from "@config";
 import DB from "@models/index";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { HttpException } from "@exceptions/HttpException";
@@ -17,7 +17,10 @@ class AuthService {
   public userTypes = DB.UserTypes;
   public userTypeMap = DB.UserTypeMap;
 
-  public async signup(userData: CreateUserDto): Promise<IUser> {
+  public async signup(
+    userData: CreateUserDto,
+    userType: number,
+  ): Promise<IUser> {
     if (isEmpty(userData))
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
@@ -37,7 +40,7 @@ class AuthService {
       }
 
       if (userTypeInstance.userTypeId === EUserTypes.MANAGER) {
-        if (req.userType === EUserTypes.SUPER_ADMIN) {
+        if (userType === EUserTypes.SUPER_ADMIN) {
           const findUserByEmail: IUser = await this.users.findOne({
             where: { email: userData.email },
           });
@@ -67,7 +70,7 @@ class AuthService {
 
   public async login(
     userData: LoginUserDto,
-  ): Promise<{ userId: number; userTypeId: number }> {
+  ): Promise<{ userId: number; userTypeId: number; token: string }> {
     if (isEmpty(userData))
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
@@ -115,7 +118,7 @@ class AuthService {
 
     const userTypeId = userTypeInstance.id;
 
-    return { userId, userTypeId };
+    return { userId, userTypeId, token };
   }
 
   public async logout(userData: IUser): Promise<IUser> {
