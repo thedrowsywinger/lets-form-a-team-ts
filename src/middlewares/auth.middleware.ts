@@ -70,7 +70,7 @@ const authMiddleware = async (
     }
 
     const userTypeInstance = await DB.UserTypes.findOne({
-      where: { userTypeId: userTypeMapInstance.userTypeId },
+      where: { id: userTypeMapInstance.userTypeId },
     });
 
     if (!userTypeInstance) {

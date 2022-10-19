@@ -1,8 +1,10 @@
 import { compare, hash } from "bcrypt";
+import bcrypt = require("bcryptjs");
+import jwt = require("jsonwebtoken");
 import { sign } from "jsonwebtoken";
 import { SECRET_KEY } from "@config";
 import DB from "@models/index";
-import { CreateUserDto } from "@dtos/users.dto";
+import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { HttpException } from "@exceptions/HttpException";
 import { DataStoredInToken, TokenData } from "@interfaces/auth.interface";
 import { IUser } from "@interfaces/users.interface";
@@ -13,6 +15,7 @@ import { EUserTypes } from "@/utils/constants";
 class AuthService {
   public users = DB.Users;
   public userTypes = DB.UserTypes;
+  public userTypeMap = DB.UserTypeMap;
 
   public async signup(userData: CreateUserDto): Promise<IUser> {
     if (isEmpty(userData))
@@ -63,37 +66,56 @@ class AuthService {
   }
 
   public async login(
-    userData: CreateUserDto,
-  ): Promise<{ cookie: string; findUser: IUser }> {
+    userData: LoginUserDto,
+  ): Promise<{ userId: number; userTypeId: number }> {
     if (isEmpty(userData))
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
-        "You're not userData",
+        ApiResponseMessages.INVALID_POST_REQUEST,
       );
 
-    const findUser: IUser = await this.users.findOne({
+    const userInstance: IUser = await this.users.findOne({
       where: { email: userData.email },
     });
-    if (!findUser)
+    if (!userInstance)
       throw new HttpException(
         EHttpStatusCodes.CONFLICT,
-        `Your email ${userData.email} not found`,
+        ApiResponseMessages.INVALID_EMAIL(userData.email),
       );
+    const userId = userInstance.id;
 
-    const isPasswordMatching: boolean = await compare(
+    const match = await bcrypt.compare(
       userData.password,
-      findUser.password,
+      userInstance.password,
     );
-    if (!isPasswordMatching)
+    if (!match) {
       throw new HttpException(
-        EHttpStatusCodes.CONFLICT,
-        "Your password not matching",
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.USERNAME_PASSWORD_MISMATCH,
       );
+    }
 
-    const tokenData = this.createToken(findUser);
-    const cookie = this.createCookie(tokenData);
+    const token = jwt.sign(
+      // @ts-ignore
+      { _id: userInstance.id.toString() },
+      // @ts-ignore
+      JWT_SECRET_KEY,
+      {
+        expiresIn: "1d",
+      },
+    );
 
-    return { cookie, findUser };
+    const userTypeMapInstance = await this.userTypeMap.findOne({
+      where: { userId: userInstance.id },
+    });
+
+    const userTypeInstance = await this.userTypes.findOne({
+      where: { id: userTypeMapInstance.userTypeId },
+    });
+
+    const userTypeId = userTypeInstance.id;
+
+    return { userId, userTypeId };
   }
 
   public async logout(userData: IUser): Promise<IUser> {

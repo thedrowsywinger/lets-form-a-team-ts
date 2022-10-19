@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { CreateUserDto } from "@dtos/users.dto";
+import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { IUser } from "@interfaces/users.interface";
 import { RequestWithUser } from "@interfaces/auth.interface";
 import AuthService from "@services/auth.service";
 import { EHttpStatusCodes } from "@/common";
+import { ApiResponseMessages } from "@/utils/apiResponseMessages";
 
 class AuthController {
   public authService = new AuthService();
@@ -21,13 +22,14 @@ class AuthController {
 
   public logIn = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userData: CreateUserDto = req.body;
-      const { cookie, findUser } = await this.authService.login(userData);
+      const userData: LoginUserDto = req.body;
+      const { userId, userTypeId } = await this.authService.login(userData);
 
-      res.setHeader("Set-Cookie", [cookie]);
+      req["userId"] = userId;
+      req["userTypeId"] = userTypeId;
       res
         .status(EHttpStatusCodes.OK)
-        .json({ data: findUser, message: "login" });
+        .send({ message: ApiResponseMessages.SUCCESS });
     } catch (error) {
       next(error);
     }

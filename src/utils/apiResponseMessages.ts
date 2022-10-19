@@ -6,6 +6,9 @@ const ApiResponseMessages = {
   INVALID_JWT: "Invalid JWT. Please Include a proper JWT authorized key",
   INVALID_USER_TYPE: "Invalid Account Type",
   INVALID_USER: "Invalid User",
+  INVALID_EMAIL: function (email) {
+    return `Your email: '${email}' does not exist`;
+  },
   INVALID_LEAVE: "This leave entry is invalid",
 
   USERNAME_PASSWORD_MISMATCH:
