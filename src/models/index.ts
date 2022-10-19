@@ -9,6 +9,8 @@ import {
   DB_DIALECT,
 } from "@config";
 import UserModel from "@models/users.model";
+import UserTypesModel from "@models/userType.model";
+import UserTypeMapModel from "@models/userTypeMap.model";
 import { logger } from "@utils/logger";
 
 const sequelize = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
@@ -38,8 +40,22 @@ const DB = {
    *
    */
   Users: UserModel(sequelize),
+  UserTypes: UserTypesModel(sequelize),
+  UserTypeMap: UserTypeMapModel(sequelize),
   sequelize, // connection instance (RAW queries)
   Sequelize, // library
 };
+
+function applyRelationship() {
+  const { Users, UserTypes, UserTypeMap } = DB;
+
+  UserTypeMap.hasOne(Users, { foreignKey: "id", as: "usersId" });
+  Users.belongsTo(UserTypeMap, { foreignKey: "id", as: "userTypeId" });
+
+  UserTypeMap.hasMany(UserTypes, { foreignKey: "id", as: "userTypes" });
+  UserTypes.belongsTo(UserTypeMap, { foreignKey: "id", as: "userTypeMapId" });
+}
+
+applyRelationship();
 
 export default DB;

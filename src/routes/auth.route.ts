@@ -4,9 +4,10 @@ import { CreateUserDto } from "@dtos/users.dto";
 import { Routes } from "@interfaces/routes.interface";
 import authMiddleware from "@middlewares/auth.middleware";
 import validationMiddleware from "@middlewares/validation.middleware";
+import { ApiRoutes } from "@/utils/apiRoutes";
 
 class AuthRoute implements Routes {
-  public path = "/";
+  public path = ApiRoutes.API;
   public router = Router();
   public authController = new AuthController();
 
@@ -16,12 +17,12 @@ class AuthRoute implements Routes {
 
   private initializeRoutes() {
     this.router.post(
-      `${this.path}signup`,
+      `${this.path}${ApiRoutes.REGISTER_USER}`,
       validationMiddleware(CreateUserDto, "body"),
       this.authController.signUp,
     );
     this.router.post(
-      `${this.path}login`,
+      `${this.path}${ApiRoutes.LOGIN}`,
       validationMiddleware(CreateUserDto, "body"),
       this.authController.logIn,
     );

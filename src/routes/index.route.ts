@@ -2,8 +2,10 @@ import { Router } from "express";
 import IndexController from "@controllers/index.controller";
 import { Routes } from "@interfaces/routes.interface";
 
+import { ApiRoutes } from "@/utils/apiRoutes";
+
 class IndexRoute implements Routes {
-  public path = "/";
+  public path = ApiRoutes.API;
   public router = Router();
   public indexController = new IndexController();
 

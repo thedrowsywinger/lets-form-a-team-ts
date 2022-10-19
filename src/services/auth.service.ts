@@ -8,6 +8,8 @@ import { DataStoredInToken, TokenData } from "@interfaces/auth.interface";
 import { IUser } from "@interfaces/users.interface";
 import { isEmpty } from "@utils/util";
 import { EHttpStatusCodes } from "@/common";
+import { ApiResponseMessages } from "@utils/apiResponseMessages";
+import { Sequelize as TSequelize, QueryInterface } from "sequelize";
 
 class AuthService {
   public users = DB.Users;
@@ -16,16 +18,33 @@ class AuthService {
     if (isEmpty(userData))
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
-        "You're not userData",
+        ApiResponseMessages.INVALID_POST_REQUEST,
       );
 
-    const findUser: IUser = await this.users.findOne({
+    try {
+    } catch (e) {
+      throw new HttpException(
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.SYSTEM_ERROR,
+      );
+    }
+
+    const findUserByEmail: IUser = await this.users.findOne({
       where: { email: userData.email },
     });
-    if (findUser)
+    if (findUserByEmail)
       throw new HttpException(
         EHttpStatusCodes.CONFLICT,
-        `You're email ${userData.email} already exists`,
+        ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
+      );
+
+    const findUserByUsername: IUser = await this.users.findOne({
+      where: { email: userData.username },
+    });
+    if (findUserByUsername)
+      throw new HttpException(
+        EHttpStatusCodes.CONFLICT,
+        ApiResponseMessages.USERNAME_ALREADY_EXISTS(userData.username),
       );
 
     const hashedPassword = await hash(userData.password, 10);

@@ -5,3 +5,15 @@ export interface IUser extends ITimestamps {
   email: string;
   password: string;
 }
+
+export interface IUserTypes extends ITimestamps {
+  id: number;
+  userType: string;
+  userTypeId: number;
+}
+
+export interface IUserTypeMap extends ITimestamps {
+  id: number;
+  userTypeId: number;
+  userId: number;
+}
