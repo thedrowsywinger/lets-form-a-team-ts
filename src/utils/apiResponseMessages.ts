@@ -4,7 +4,7 @@ const ApiResponseMessages = {
   FAILED: "Failed",
 
   INVALID_JWT: "Invalid JWT. Please Include a proper JWT authorized key",
-  INVALID_ACCOUNT_TYPE: "Invalid Account Type",
+  INVALID_USER_TYPE: "Invalid Account Type",
   INVALID_USER: "Invalid User",
   INVALID_LEAVE: "This leave entry is invalid",
 
@@ -23,6 +23,8 @@ const ApiResponseMessages = {
 
   SYSTEM_ERROR: "Sorry, something went wrong",
   INVALID_POST_REQUEST: "Invalid POST Request",
+  NO_USER_TYPE_MAP:
+    "There was something wrong with your registration. Please contact the system admin",
 };
 
 export { ApiResponseMessages };

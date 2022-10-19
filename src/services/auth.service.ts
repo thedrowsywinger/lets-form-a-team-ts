@@ -9,10 +9,10 @@ import { IUser } from "@interfaces/users.interface";
 import { isEmpty } from "@utils/util";
 import { EHttpStatusCodes } from "@/common";
 import { ApiResponseMessages } from "@utils/apiResponseMessages";
-import { Sequelize as TSequelize, QueryInterface } from "sequelize";
-
+import { EUserTypes } from "@/utils/constants";
 class AuthService {
   public users = DB.Users;
+  public userTypes = DB.UserTypes;
 
   public async signup(userData: CreateUserDto): Promise<IUser> {
     if (isEmpty(userData))
@@ -21,39 +21,45 @@ class AuthService {
         ApiResponseMessages.INVALID_POST_REQUEST,
       );
 
+    const transaction = await DB.sequelize.transaction();
     try {
+      const userTypeInstance = await this.userTypes.findOne({
+        where: { userTypeId: userData.userTypeId },
+      });
+      if (!userTypeInstance) {
+        throw new HttpException(
+          EHttpStatusCodes.BAD_REQUEST,
+          ApiResponseMessages.INVALID_USER_TYPE,
+        );
+      }
+
+      if (userTypeInstance.userTypeId === EUserTypes.MANAGER) {
+        if (req.userType === EUserTypes.SUPER_ADMIN) {
+          const findUserByEmail: IUser = await this.users.findOne({
+            where: { email: userData.email },
+          });
+          if (findUserByEmail)
+            throw new HttpException(
+              EHttpStatusCodes.CONFLICT,
+              ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
+            );
+
+          const hashedPassword = await hash(userData.password, 10);
+          const createUserData: IUser = await this.users.create({
+            ...userData,
+            password: hashedPassword,
+          });
+
+          return createUserData;
+        }
+      }
     } catch (e) {
+      await transaction.rollback();
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
         ApiResponseMessages.SYSTEM_ERROR,
       );
     }
-
-    const findUserByEmail: IUser = await this.users.findOne({
-      where: { email: userData.email },
-    });
-    if (findUserByEmail)
-      throw new HttpException(
-        EHttpStatusCodes.CONFLICT,
-        ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
-      );
-
-    const findUserByUsername: IUser = await this.users.findOne({
-      where: { email: userData.username },
-    });
-    if (findUserByUsername)
-      throw new HttpException(
-        EHttpStatusCodes.CONFLICT,
-        ApiResponseMessages.USERNAME_ALREADY_EXISTS(userData.username),
-      );
-
-    const hashedPassword = await hash(userData.password, 10);
-    const createUserData: IUser = await this.users.create({
-      ...userData,
-      password: hashedPassword,
-    });
-
-    return createUserData;
   }
 
   public async login(
