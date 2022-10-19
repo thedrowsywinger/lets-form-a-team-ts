@@ -11,6 +11,7 @@ import {
 import UserModel from "@models/users.model";
 import UserTypesModel from "@models/userType.model";
 import UserTypeMapModel from "@models/userTypeMap.model";
+import ProfileModel from "@models/profile.model";
 import { logger } from "@utils/logger";
 
 const sequelize = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
@@ -40,6 +41,7 @@ const DB = {
    *
    */
   Users: UserModel(sequelize),
+  Profile: ProfileModel(sequelize),
   UserTypes: UserTypesModel(sequelize),
   UserTypeMap: UserTypeMapModel(sequelize),
   sequelize, // connection instance (RAW queries)
@@ -47,13 +49,18 @@ const DB = {
 };
 
 function applyRelationship() {
-  const { Users, UserTypes, UserTypeMap } = DB;
+  const { Users, UserTypes, UserTypeMap, Profile } = DB;
 
   UserTypeMap.hasOne(Users, { foreignKey: "id", as: "usersId" });
   Users.belongsTo(UserTypeMap, { foreignKey: "id", as: "userTypeId" });
 
   UserTypeMap.hasMany(UserTypes, { foreignKey: "id", as: "userTypes" });
   UserTypes.belongsTo(UserTypeMap, { foreignKey: "id", as: "userTypeMapId" });
+
+  Profile.belongsTo(Users, {
+    foreignKey: "authUserId",
+    targetKey: "id",
+  });
 }
 
 applyRelationship();

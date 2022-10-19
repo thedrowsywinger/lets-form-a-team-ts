@@ -28,6 +28,11 @@ const ApiResponseMessages = {
   INVALID_POST_REQUEST: "Invalid POST Request",
   NO_USER_TYPE_MAP:
     "There was something wrong with your registration. Please contact the system admin",
+
+  ONLY_SUPER_ADMIN_CAN_REGISTER_MANAGER:
+    "Only a Super Admin can register a manager",
+  EMPLOYEE_REGISTER_AUTHORIZATION:
+    "Only a Super Admin or a Manager can register an Employee",
 };
 
 export { ApiResponseMessages };

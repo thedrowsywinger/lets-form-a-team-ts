@@ -9,6 +9,12 @@ export class CreateUserDto {
 
   @IsNumber()
   public userTypeId: number;
+
+  @IsString()
+  public name: string;
+
+  @IsString()
+  public contactNumber: string;
 }
 
 export class LoginUserDto {

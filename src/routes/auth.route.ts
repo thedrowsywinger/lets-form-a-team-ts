@@ -16,11 +16,12 @@ class AuthRoute implements Routes {
   }
 
   private initializeRoutes() {
-    // this.router.post(
-    //   `${this.path}${ApiRoutes.REGISTER_USER}`,
-    //   validationMiddleware(CreateUserDto, "body"),
-    //   this.authController.signUp,
-    // );
+    this.router.post(
+      `${this.path}${ApiRoutes.REGISTER_USER}`,
+      authMiddleware,
+      validationMiddleware(CreateUserDto, "body"),
+      this.authController.signUp,
+    );
     this.router.post(
       `${this.path}${ApiRoutes.LOGIN}`,
       validationMiddleware(LoginUserDto, "body"),

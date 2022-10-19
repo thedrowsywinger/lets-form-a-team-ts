@@ -9,20 +9,20 @@ import { ApiResponseMessages } from "@/utils/apiResponseMessages";
 class AuthController {
   public authService = new AuthService();
 
-  // public signUp = async (req: Request, res: Response, next: NextFunction) => {
-  //   try {
-  //     const userData: CreateUserDto = req.body;
-  //     const userType: number = req.userType;
-  //     const signUpUserData: IUser = await this.authService.signup(
-  //       userData,
-  //       userType,
-  //     );
+  public signUp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userData: CreateUserDto = req.body;
+      const reqUserUserTypeId: number = req.userTypeId;
+      const signUpUserData: IUser = await this.authService.signup(
+        userData,
+        reqUserUserTypeId,
+      );
 
-  //     res.status(201).json({ data: signUpUserData, message: "signup" });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // };
+      res.status(201).json({ data: signUpUserData, message: "signup" });
+    } catch (error) {
+      next(error);
+    }
+  };
 
   public logIn = async (req: Request, res: Response, next: NextFunction) => {
     try {

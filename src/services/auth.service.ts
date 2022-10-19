@@ -16,10 +16,11 @@ class AuthService {
   public users = DB.Users;
   public userTypes = DB.UserTypes;
   public userTypeMap = DB.UserTypeMap;
+  public profiles = DB.Profile;
 
   public async signup(
     userData: CreateUserDto,
-    userType: number,
+    reqUserUserTypeId: number,
   ): Promise<IUser> {
     if (isEmpty(userData))
       throw new HttpException(
@@ -32,7 +33,7 @@ class AuthService {
       const userTypeInstance = await this.userTypes.findOne({
         where: { userTypeId: userData.userTypeId },
       });
-      if (!userTypeInstance) {
+      if (userTypeInstance) {
         throw new HttpException(
           EHttpStatusCodes.BAD_REQUEST,
           ApiResponseMessages.INVALID_USER_TYPE,
@@ -40,7 +41,45 @@ class AuthService {
       }
 
       if (userTypeInstance.userTypeId === EUserTypes.MANAGER) {
-        if (userType === EUserTypes.SUPER_ADMIN) {
+        if (reqUserUserTypeId === EUserTypes.SUPER_ADMIN) {
+          const findUserByEmail: IUser = await this.users.findOne({
+            where: { email: userData.email },
+          });
+          if (findUserByEmail)
+            throw new HttpException(
+              EHttpStatusCodes.CONFLICT,
+              ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
+            );
+
+          const hashedPassword = await hash(userData.password, 10);
+          const createUserData = await this.users.create({
+            email: userData.email,
+            password: hashedPassword,
+          });
+
+          const createUserProfile = await this.profiles.create({
+            name: userData.name,
+            contactNumber: userData.contactNumber,
+            authUserId: createUserData.id,
+          });
+
+          const createUserTypeMap = await this.userTypeMap.create({
+            userId: createUserData.id,
+            userTypeId: userTypeInstance.id,
+          });
+
+          return createUserData;
+        } else {
+          throw new HttpException(
+            EHttpStatusCodes.UNAUTHORIZED,
+            ApiResponseMessages.ONLY_SUPER_ADMIN_CAN_REGISTER_MANAGER,
+          );
+        }
+      } else if (userTypeInstance.userTypeId === EUserTypes.EMPLOYEE) {
+        if (
+          reqUserUserTypeId === EUserTypes.MANAGER ||
+          reqUserUserTypeId === EUserTypes.SUPER_ADMIN
+        ) {
           const findUserByEmail: IUser = await this.users.findOne({
             where: { email: userData.email },
           });
@@ -52,11 +91,27 @@ class AuthService {
 
           const hashedPassword = await hash(userData.password, 10);
           const createUserData: IUser = await this.users.create({
-            ...userData,
+            email: userData.email,
             password: hashedPassword,
           });
 
+          const createUserProfile = await this.profiles.create({
+            name: userData.name,
+            contactNumber: userData.contactNumber,
+            authUserId: createUserData.id,
+          });
+
+          const createUserTypeMap = await this.userTypeMap.create({
+            userId: createUserData.id,
+            userTypeId: userTypeInstance.id,
+          });
+
           return createUserData;
+        } else {
+          throw new HttpException(
+            EHttpStatusCodes.UNAUTHORIZED,
+            ApiResponseMessages.EMPLOYEE_REGISTER_AUTHORIZATION,
+          );
         }
       }
     } catch (e) {
@@ -135,21 +190,6 @@ class AuthService {
       throw new HttpException(EHttpStatusCodes.CONFLICT, "You're not user");
 
     return findUser;
-  }
-
-  public createToken(user: IUser): TokenData {
-    const dataStoredInToken: DataStoredInToken = { id: user.id };
-    const secretKey: string = SECRET_KEY;
-    const expiresIn: number = 60 * 60;
-
-    return {
-      expiresIn,
-      token: sign(dataStoredInToken, secretKey, { expiresIn }),
-    };
-  }
-
-  public createCookie(tokenData: TokenData): string {
-    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
   }
 }
 

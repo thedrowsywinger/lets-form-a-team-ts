@@ -79,7 +79,7 @@ const authMiddleware = async (
       });
     }
 
-    req["userType"] = userTypeInstance.userTypeId;
+    req["userTypeId"] = userTypeInstance.userTypeId;
     next();
     // const userInstance = await DB.Users.findOne({where:{}})
 

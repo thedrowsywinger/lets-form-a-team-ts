@@ -56,6 +56,11 @@ module.exports = {
           userId: superAdminInstance.id,
           userTypeId: superAdminUserTypeInstance.id,
         });
+        var superAdminProfileInstance = await DB.Profile.create({
+          name: "Super Admin",
+          contactNumber: "+88017896355472",
+          authUserId: superAdminInstance.id,
+        });
       }
       await transaction.commit();
     } catch (err) {
