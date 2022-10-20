@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
-import { IUser } from "@interfaces/users.interface";
+import { IUser, IUserForOutput } from "@interfaces/users.interface";
 import { RequestWithUser } from "@interfaces/auth.interface";
 import AuthService from "@services/auth.service";
 import { EHttpStatusCodes } from "@/common";
@@ -13,12 +13,17 @@ class AuthController {
     try {
       const userData: CreateUserDto = req.body;
       const reqUserUserTypeId: number = req.userTypeId;
-      const signUpUserData: IUser = await this.authService.signup(
-        userData,
-        reqUserUserTypeId,
-      );
+      const { createUserData, createUserProfile, createUserTypeMap } =
+        await this.authService.signup(userData, reqUserUserTypeId);
 
-      res.status(201).json({ data: signUpUserData, message: "signup" });
+      res.status(EHttpStatusCodes.ACCEPTED).json({
+        data: {
+          authUserData: createUserData,
+          profile: createUserProfile,
+          userTypeMap: createUserTypeMap,
+        },
+        message: ApiResponseMessages.SUCCESS,
+      });
     } catch (error) {
       next(error);
     }

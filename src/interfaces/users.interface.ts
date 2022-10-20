@@ -6,6 +6,11 @@ export interface IUser extends ITimestamps {
   password: string;
 }
 
+export interface IUserForOutput extends ITimestamps {
+  id: number;
+  email: string;
+}
+
 export interface IUserTypes extends ITimestamps {
   id: number;
   userType: string;

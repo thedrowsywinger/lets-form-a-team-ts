@@ -1,3 +1,203 @@
+# Let's Form a Team
+
+## An Account Type-Based Authorization/Authentication System using Node JS x TypeScript
+
+### Project Setup:
+
+Setting up the Database first:
+
+```sh
+sudo -i -u postgres psql
+create database hr_hero_db;
+create user super_admin with encrypted password 'superadmin';
+grant all privileges on database hr_hero_db to super_admin;
+```
+
+Setting up the project:
+
+```sh
+git clone https://github.com/thedrowsywinger/lets-form-a-team-ts.git
+cd lets-form-a-team-ts
+yarn
+yarn dev
+```
+
+Setting up the environment:
+Create a ".env.development.local" file. The file should contain the following:
+
+```sh
+# PORT
+PORT =
+
+# DATABASE
+DB_HOST =
+DB_PORT =
+DB_USER =
+DB_PASSWORD =
+DB_DATABASE =
+DB_DIALECT =
+
+# TOKEN
+SECRET_KEY =
+
+# LOG
+LOG_FORMAT =
+LOG_DIR =
+
+# CORS
+ORIGIN =
+CREDENTIALS =
+```
+
+Run the project with the following command:
+
+```sh
+docker compose --env-file ./.env.development.local up
+```
+
+Run the migrations and seeders(Run this in a separate tab):
+
+```sh
+docker exec -it <container_id> sh
+yarn migrate:dev
+yarn seed:deV:all
+```
+
+###### Account Types:
+
+Super Admin: 1
+Manager: 2
+Employee 3
+
+##### Login:
+
+URL: 127.0.0.1:3001/api/core/login/
+
+Sample POST request
+
+```sh
+{
+    "username": "superAdmin",
+    "password": "super_admin1"
+}
+```
+
+Sample Response:
+
+```sh
+{
+    "message": "Succesful",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIxIiwiaWF0IjoxNjYyMDQ0NDk0LCJleHAiOjE2NjIxMzA4OTR9.mFKmXAoViHdZ4M2icaI5Vf8s0NI2djehBJyeHFvZlxc",
+}
+```
+
+This access token must be used in requests that require Authorization. The Authorization header must be set like this: "jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIxIiwiaWF0IjoxNjYyMDQ0NDk0LCJleHAiOjE2NjIxMzA4OTR9.mFKmXAoViHdZ4M2icaI5Vf8s0NI2djehBJyeHFvZlxc"
+
+##### Register Manager:
+
+A superAdmin can only add a manager.
+URL: 127.0.0.1:3001/api/core/register/user-profile/
+
+Sample POST request
+
+```sh
+{
+    "password": "Manager1",
+    "name": "John Manager",
+    "contactNumber": "01789652243",
+    "email": "john@hrhero.com",
+    "userTypeId": 2
+}
+```
+
+# TODOsignup
+
+serialize the output, remove the hashed password
+
+Sample Response:
+
+```sh
+{
+    "data": {
+        "authUserData": {
+            "id": 2,
+            "email": "john@hrhero.com",
+            "password": "$2b$08$ZGbCDhxvat24smoHgvLvg.ohhdPgkdLliTO642gZCwQHfNuBwXCGa",
+            "createdAt": "2022-10-20T04:42:20.653Z",
+            "updatedAt": "2022-10-20T04:42:20.656Z"
+        },
+        "profile": {
+            "createdAt": "2022-10-20T04:42:20.683Z",
+            "updatedAt": "2022-10-20T04:42:20.683Z",
+            "id": 2,
+            "name": "John Manager",
+            "contactNumber": "01789353343",
+            "authUserId": 3
+        },
+        "userTypeMap": {
+            "createdAt": "2022-10-20T04:42:20.689Z",
+            "updatedAt": "2022-10-20T04:42:20.689Z",
+            "id": 2,
+            "userId": 2,
+            "userTypeId": 2
+        }
+    },
+    "message": "Successful"
+}
+```
+
+##### Register Employee:
+
+A super admin or a manager can add an employee
+URL (POST REQUEST): 127.0.0.1:3001/api/core/register/user-profile/
+Sample POST request:
+
+```sh
+{
+    "username": "harryMaguire",
+    "password": "Defender1",
+    "name": "Harry Maguire",
+    "contactNumber": "01789353343",
+    "email": "harry@hrhero.com",
+    "accountType": 3
+}
+```
+
+Sample Response:
+
+```sh
+
+{
+    "data": {
+        "authUserData": {
+            "id": 3,
+            "email": "harry@hrhero.com",
+            "password": "$2b$08$ZGbCDhxvat24smoHgvLvg.ohhdPgkdLliTO642gZCwQHfNuBwXCGa",
+            "createdAt": "2022-10-20T04:42:20.653Z",
+            "updatedAt": "2022-10-20T04:42:20.656Z"
+        },
+        "profile": {
+            "createdAt": "2022-10-20T04:42:20.683Z",
+            "updatedAt": "2022-10-20T04:42:20.683Z",
+            "id": 3,
+            "name": "Harry Maguire",
+            "contactNumber": "01789353343",
+            "authUserId": 3
+        },
+        "userTypeMap": {
+            "createdAt": "2022-10-20T04:42:20.689Z",
+            "updatedAt": "2022-10-20T04:42:20.689Z",
+            "id": 3,
+            "userId": 3,
+            "userTypeId": 3
+        }
+    },
+    "message": "Successful"
+}
+```
+
+# Documentation for the template used:
+
 # Express + TypeScript + Sequelize Starter Template (with Migrations)
 
 This repository contains a starter template using Express, TypeScript and

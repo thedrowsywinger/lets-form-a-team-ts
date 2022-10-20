@@ -7,11 +7,16 @@ import DB from "@models/index";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { HttpException } from "@exceptions/HttpException";
 import { DataStoredInToken, TokenData } from "@interfaces/auth.interface";
-import { IUser } from "@interfaces/users.interface";
+import {
+  IUser,
+  IUserForOutput,
+  IUserTypeMap,
+} from "@interfaces/users.interface";
 import { isEmpty } from "@utils/util";
 import { EHttpStatusCodes } from "@/common";
 import { ApiResponseMessages } from "@utils/apiResponseMessages";
 import { EUserTypes } from "@/utils/constants";
+import { IProfile } from "@/interfaces/profile.interface";
 class AuthService {
   public users = DB.Users;
   public userTypes = DB.UserTypes;
@@ -21,7 +26,11 @@ class AuthService {
   public async signup(
     userData: CreateUserDto,
     reqUserUserTypeId: number,
-  ): Promise<IUser> {
+  ): Promise<{
+    createUserData: IUser;
+    createUserProfile: IProfile;
+    createUserTypeMap: IUserTypeMap;
+  }> {
     if (isEmpty(userData))
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
@@ -33,13 +42,14 @@ class AuthService {
       const userTypeInstance = await this.userTypes.findOne({
         where: { userTypeId: userData.userTypeId },
       });
-      if (userTypeInstance) {
+      if (!userTypeInstance) {
         throw new HttpException(
           EHttpStatusCodes.BAD_REQUEST,
           ApiResponseMessages.INVALID_USER_TYPE,
         );
       }
 
+      console.log("SUPER ADMIN REGISTERING A MANAGER");
       if (userTypeInstance.userTypeId === EUserTypes.MANAGER) {
         if (reqUserUserTypeId === EUserTypes.SUPER_ADMIN) {
           const findUserByEmail: IUser = await this.users.findOne({
@@ -51,24 +61,30 @@ class AuthService {
               ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
             );
 
-          const hashedPassword = await hash(userData.password, 10);
-          const createUserData = await this.users.create({
+          // const hashedPassword = await hash(userData.password, 10);
+          const createUserData: IUser = await this.users.create({
             email: userData.email,
-            password: hashedPassword,
+            password: userData.password,
           });
 
-          const createUserProfile = await this.profiles.create({
+          const createUserProfile: IProfile = await this.profiles.create({
             name: userData.name,
             contactNumber: userData.contactNumber,
             authUserId: createUserData.id,
           });
 
-          const createUserTypeMap = await this.userTypeMap.create({
-            userId: createUserData.id,
-            userTypeId: userTypeInstance.id,
-          });
+          const createUserTypeMap: IUserTypeMap = await this.userTypeMap.create(
+            {
+              userId: createUserData.id,
+              userTypeId: userTypeInstance.id,
+            },
+          );
 
-          return createUserData;
+          return {
+            createUserData,
+            createUserProfile,
+            createUserTypeMap,
+          };
         } else {
           throw new HttpException(
             EHttpStatusCodes.UNAUTHORIZED,
@@ -89,24 +105,30 @@ class AuthService {
               ApiResponseMessages.EMAIL_ALREADY_EXISTS(userData.email),
             );
 
-          const hashedPassword = await hash(userData.password, 10);
+          // const hashedPassword = await hash(userData.password, 10);
           const createUserData: IUser = await this.users.create({
             email: userData.email,
-            password: hashedPassword,
+            password: userData.password,
           });
 
-          const createUserProfile = await this.profiles.create({
+          const createUserProfile: IProfile = await this.profiles.create({
             name: userData.name,
             contactNumber: userData.contactNumber,
             authUserId: createUserData.id,
           });
 
-          const createUserTypeMap = await this.userTypeMap.create({
-            userId: createUserData.id,
-            userTypeId: userTypeInstance.id,
-          });
+          const createUserTypeMap: IUserTypeMap = await this.userTypeMap.create(
+            {
+              userId: createUserData.id,
+              userTypeId: userTypeInstance.id,
+            },
+          );
 
-          return createUserData;
+          return {
+            createUserData,
+            createUserProfile,
+            createUserTypeMap,
+          };
         } else {
           throw new HttpException(
             EHttpStatusCodes.UNAUTHORIZED,
