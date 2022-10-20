@@ -3,9 +3,11 @@ import UsersController from "@controllers/users.controller";
 import { CreateUserDto } from "@dtos/users.dto";
 import { Routes } from "@interfaces/routes.interface";
 import validationMiddleware from "@middlewares/validation.middleware";
+import { ApiRoutes } from "@/utils/apiRoutes";
+import authMiddleware from "@/middlewares/auth.middleware";
 
 class UsersRoute implements Routes {
-  public path = "/users";
+  public path = ApiRoutes.API;
   public router = Router();
   public usersController = new UsersController();
 
@@ -14,20 +16,19 @@ class UsersRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.get(`${this.path}`, this.usersController.getUsers);
-    this.router.get(`${this.path}/:id(\\d+)`, this.usersController.getUserById);
-    this.router.post(
-      `${this.path}`,
-      validationMiddleware(CreateUserDto, "body"),
-      this.usersController.createUser,
+    this.router.get(
+      `${this.path}${ApiRoutes.GET_USERS}`,
+      authMiddleware,
+      this.usersController.getUsers,
     );
-    this.router.put(
-      `${this.path}/:id(\\d+)`,
-      validationMiddleware(CreateUserDto, "body", true),
-      this.usersController.updateUser,
+    this.router.get(
+      `${this.path}${ApiRoutes.GET_USER_BY_ID}`,
+      authMiddleware,
+      this.usersController.getUserById,
     );
     this.router.delete(
-      `${this.path}/:id(\\d+)`,
+      `${this.path}/users/delete:id(\\d+)`,
+      authMiddleware,
       this.usersController.deleteUser,
     );
   }

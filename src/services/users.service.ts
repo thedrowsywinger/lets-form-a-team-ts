@@ -5,91 +5,69 @@ import { HttpException } from "@exceptions/HttpException";
 import { IUser } from "@interfaces/users.interface";
 import { isEmpty } from "@utils/util";
 import { EHttpStatusCodes } from "@/common";
+import { IProfile } from "@/interfaces/profile.interface";
+import { ApiResponseMessages } from "@/utils/apiResponseMessages";
 
 class UserService {
   public users = DB.Users;
+  public profile = DB.Profile;
 
-  public async findAllUser(): Promise<IUser[]> {
-    const allUser: IUser[] = await this.users.findAll();
-    return allUser;
+  public async getAllUsers(): Promise<IProfile[]> {
+    const users: IProfile[] = await this.profile.findAll();
+    return users;
   }
 
-  public async findUserById(userId: number): Promise<IUser> {
-    if (isEmpty(userId))
+  public async getUserById(userId: number): Promise<IProfile> {
+    if (isEmpty(userId)) {
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
-        "You're not userId",
+        ApiResponseMessages.INVALID_POST_REQUEST,
       );
+    }
 
-    const findUser: IUser = await this.users.findByPk(userId);
-    if (!findUser)
-      throw new HttpException(EHttpStatusCodes.CONFLICT, "You're not user");
-
-    return findUser;
-  }
-
-  public async createUser(userData: CreateUserDto): Promise<IUser> {
-    if (isEmpty(userData))
-      throw new HttpException(
-        EHttpStatusCodes.BAD_REQUEST,
-        "You're not userData",
-      );
-
-    const findUser: IUser = await this.users.findOne({
-      where: { email: userData.email },
+    const user: IProfile = await this.profile.findOne({
+      where: { id: userId },
     });
-    if (findUser)
-      throw new HttpException(
-        EHttpStatusCodes.CONFLICT,
-        `You're email ${userData.email} already exists`,
-      );
 
-    const hashedPassword = await hash(userData.password, 10);
-    const createUserData: IUser = await this.users.create({
-      ...userData,
-      password: hashedPassword,
+    if (!user) {
+      throw new HttpException(
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.INVALID_USER,
+      );
+    }
+
+    return user;
+  }
+
+  public async deleteUser(userId: number): Promise<{ result: boolean }> {
+    if (isEmpty(userId)) {
+      throw new HttpException(
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.INVALID_POST_REQUEST,
+      );
+    }
+
+    const user: IProfile = await this.profile.findOne({
+      where: { id: userId },
     });
-    return createUserData;
-  }
 
-  public async updateUser(
-    userId: number,
-    userData: CreateUserDto,
-  ): Promise<IUser> {
-    if (isEmpty(userData))
+    if (!user) {
       throw new HttpException(
         EHttpStatusCodes.BAD_REQUEST,
-        "You're not userData",
+        ApiResponseMessages.INVALID_USER,
       );
+    }
 
-    const findUser: IUser = await this.users.findByPk(userId);
-    if (!findUser)
-      throw new HttpException(EHttpStatusCodes.CONFLICT, "You're not user");
+    try {
+      await this.profile.destroy({ where: { id: userId } });
 
-    const hashedPassword = await hash(userData.password, 10);
-    await this.users.update(
-      { ...userData, password: hashedPassword },
-      { where: { id: userId } },
-    );
-
-    const updateUser: IUser = await this.users.findByPk(userId);
-    return updateUser;
-  }
-
-  public async deleteUser(userId: number): Promise<IUser> {
-    if (isEmpty(userId))
+      return { result: true };
+    } catch {
       throw new HttpException(
-        EHttpStatusCodes.BAD_REQUEST,
-        "You're not userId",
+        EHttpStatusCodes.BAD_GATEWAY,
+        ApiResponseMessages.SYSTEM_ERROR,
       );
-
-    const findUser: IUser = await this.users.findByPk(userId);
-    if (!findUser)
-      throw new HttpException(EHttpStatusCodes.CONFLICT, "You're not user");
-
-    await this.users.destroy({ where: { id: userId } });
-
-    return findUser;
+    }
   }
 }
 

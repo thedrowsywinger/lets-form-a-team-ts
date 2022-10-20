@@ -63,6 +63,8 @@ yarn migrate:dev
 yarn seed:deV:all
 ```
 
+## The Project
+
 ###### Account Types:
 
 Super Admin: 1

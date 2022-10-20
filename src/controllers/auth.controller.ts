@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
-import { IUser, IUserForOutput } from "@interfaces/users.interface";
+import { IUser } from "@interfaces/users.interface";
+import {
+  IRefreshTokenInput,
+  IRefreshTokenOutput,
+} from "@interfaces/auth.interface";
 import { RequestWithUser } from "@interfaces/auth.interface";
 import AuthService from "@services/auth.service";
 import { EHttpStatusCodes } from "@/common";
@@ -12,6 +16,7 @@ class AuthController {
   public signUp = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userData: CreateUserDto = req.body;
+      // @ts-ignore
       const reqUserUserTypeId: number = req.userTypeId;
       const { createUserData, createUserProfile, createUserTypeMap } =
         await this.authService.signup(userData, reqUserUserTypeId);
@@ -59,6 +64,24 @@ class AuthController {
       res
         .status(EHttpStatusCodes.OK)
         .json({ data: logOutUserData, message: "logout" });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public refreshToken = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const refreshTokenInputData: IRefreshTokenInput = req.body;
+      const refreshTokenOutputData: IRefreshTokenOutput =
+        await this.authService.refreshToken(refreshTokenInputData);
+      res.status(EHttpStatusCodes.OK).send({
+        message: ApiResponseMessages.SUCCESS,
+        data: refreshTokenOutputData,
+      });
     } catch (error) {
       next(error);
     }

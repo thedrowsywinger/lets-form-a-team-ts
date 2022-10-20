@@ -13,3 +13,12 @@ export interface TokenData {
 export interface RequestWithUser extends Request {
   user: IUser;
 }
+
+export interface IRefreshTokenInput {
+  accessToken: string;
+}
+
+export interface IRefreshTokenOutput {
+  accessToken: string;
+  expires: string;
+}

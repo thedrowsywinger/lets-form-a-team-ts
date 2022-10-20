@@ -2,11 +2,16 @@ import { compare, hash } from "bcrypt";
 import bcrypt = require("bcrypt");
 import jwt = require("jsonwebtoken");
 import { sign } from "jsonwebtoken";
-import { JWT_SECRET_KEY } from "@config";
+import { JWT_SECRET_KEY, JWT_REFRESH_TOKEN_KEY } from "@config";
 import DB from "@models/index";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { DataStoredInToken, TokenData } from "@interfaces/auth.interface";
+import {
+  DataStoredInToken,
+  IRefreshTokenInput,
+  IRefreshTokenOutput,
+  TokenData,
+} from "@interfaces/auth.interface";
 import {
   IUser,
   IUserForOutput,
@@ -212,6 +217,58 @@ class AuthService {
       throw new HttpException(EHttpStatusCodes.CONFLICT, "You're not user");
 
     return findUser;
+  }
+
+  public async refreshToken(
+    refreshTokenInputData: IRefreshTokenInput,
+  ): Promise<IRefreshTokenOutput> {
+    if (isEmpty(refreshTokenInputData))
+      throw new HttpException(
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.INVALID_POST_REQUEST,
+      );
+
+    const token: string = await refreshTokenInputData.accessToken.replace(
+      "jwt ",
+      "",
+    );
+    let decoded;
+    try {
+      decoded = await jwt.verify(token, JWT_SECRET_KEY);
+    } catch {
+      try {
+        decoded = await jwt.verify(token, JWT_REFRESH_TOKEN_KEY);
+      } catch {
+        throw new HttpException(
+          EHttpStatusCodes.UNAUTHORIZED,
+          ApiResponseMessages.INVALID_JWT,
+        );
+      }
+    }
+
+    const userId = decoded._id;
+    const userInstance = await this.users.findOne({ where: { id: userId } });
+    if (!userInstance) {
+      throw new HttpException(
+        EHttpStatusCodes.BAD_REQUEST,
+        ApiResponseMessages.INVALID_USER,
+      );
+    }
+
+    const refreshToken: string = jwt.sign(
+      // @ts-ignore
+      { _id: userInstance.id.toString() },
+      // @ts-ignore
+      JWT_REFRESH_TOKEN_KEY,
+      { expiresIn: "1d" },
+    );
+
+    const data: IRefreshTokenOutput = {
+      accessToken: refreshToken,
+      expires: "1d",
+    };
+
+    return data;
   }
 }
 

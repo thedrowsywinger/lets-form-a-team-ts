@@ -1,19 +1,33 @@
 import { NextFunction, Request, Response } from "express";
 import { CreateUserDto } from "@dtos/users.dto";
 import { IUser } from "@interfaces/users.interface";
+import { IProfile } from "@/interfaces/profile.interface";
 import userService from "@services/users.service";
 import { EHttpStatusCodes } from "@/common";
+import { EUserTypes } from "@/utils/constants";
+import { ApiResponseMessages } from "@/utils/apiResponseMessages";
 
 class UsersController {
   public userService = new userService();
 
   public getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const findAllUsersData: IUser[] = await this.userService.findAllUser();
-
-      res
-        .status(EHttpStatusCodes.OK)
-        .json({ data: findAllUsersData, message: "findAll" });
+      if (
+        // @ts-ignore
+        req.userTypeId === EUserTypes.MANAGER ||
+        // @ts-ignore
+        req.userTypeId === EUserTypes.SUPER_ADMIN
+      ) {
+        const users: IProfile[] = await this.userService.getAllUsers();
+        res.status(EHttpStatusCodes.OK).send({
+          message: ApiResponseMessages.SUCCESS,
+          data: users,
+        });
+      } else {
+        res.status(EHttpStatusCodes.UNAUTHORIZED).send({
+          message: ApiResponseMessages.UNAUTHORIZED_ACCESS,
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -25,50 +39,22 @@ class UsersController {
     next: NextFunction,
   ) => {
     try {
-      const userId = Number(req.params.id);
-      const findOneUserData: IUser = await this.userService.findUserById(
-        userId,
-      );
-
-      res
-        .status(EHttpStatusCodes.OK)
-        .json({ data: findOneUserData, message: "findOne" });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public createUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const userData: CreateUserDto = req.body;
-      const createUserData: IUser = await this.userService.createUser(userData);
-
-      res.status(201).json({ data: createUserData, message: "created" });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public updateUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const userId = Number(req.params.id);
-      const userData: CreateUserDto = req.body;
-      const updateUserData: IUser = await this.userService.updateUser(
-        userId,
-        userData,
-      );
-
-      res
-        .status(EHttpStatusCodes.OK)
-        .json({ data: updateUserData, message: "updated" });
+      if (
+        // @ts-ignore
+        req.userTypeId === EUserTypes.MANAGER ||
+        // @ts-ignore
+        req.userTypeId === EUserTypes.SUPER_ADMIN
+      ) {
+        const userId = Number(req.query.id);
+        const user: IProfile = await this.userService.getUserById(userId);
+        res
+          .status(EHttpStatusCodes.OK)
+          .json({ data: user, message: ApiResponseMessages.SUCCESS });
+      } else {
+        res.status(EHttpStatusCodes.UNAUTHORIZED).json({
+          message: ApiResponseMessages.UNAUTHORIZED_ACCESS,
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -80,12 +66,28 @@ class UsersController {
     next: NextFunction,
   ) => {
     try {
-      const userId = Number(req.params.id);
-      const deleteUserData: IUser = await this.userService.deleteUser(userId);
-
-      res
-        .status(EHttpStatusCodes.OK)
-        .json({ data: deleteUserData, message: "deleted" });
+      if (
+        // @ts-ignore
+        req.userTypeId === EUserTypes.MANAGER ||
+        // @ts-ignore
+        req.userTypeId === EUserTypes.SUPER_ADMIN
+      ) {
+        const userId = Number(req.query.id);
+        const result = await this.userService.deleteUser(userId);
+        if (result) {
+          res
+            .status(EHttpStatusCodes.OK)
+            .json({ message: ApiResponseMessages.SUCCESS });
+        } else {
+          res
+            .status(EHttpStatusCodes.BAD_REQUEST)
+            .send({ message: ApiResponseMessages.FAILED });
+        }
+      } else {
+        res.status(EHttpStatusCodes.UNAUTHORIZED).json({
+          message: ApiResponseMessages.UNAUTHORIZED_ACCESS,
+        });
+      }
     } catch (error) {
       next(error);
     }
