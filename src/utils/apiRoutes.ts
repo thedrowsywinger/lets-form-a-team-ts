@@ -9,6 +9,7 @@ const ApiRoutes = {
 
   // core
   REGISTER_USER: "/register/user-profile/",
+  UPDATE_USER: "/user-profile/edit/",
   LOGIN: "/login/",
   REFRESH_ACCESS_TOKEN: "/refresh-token/",
   GET_USERS: "/get-users/",

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import UsersController from "@controllers/users.controller";
-import { CreateUserDto } from "@dtos/users.dto";
+import { UpdateUserDto } from "@dtos/users.dto";
 import { Routes } from "@interfaces/routes.interface";
 import validationMiddleware from "@middlewares/validation.middleware";
 import { ApiRoutes } from "@/utils/apiRoutes";
@@ -30,6 +30,12 @@ class UsersRoute implements Routes {
       `${this.path}/users/delete:id(\\d+)`,
       authMiddleware,
       this.usersController.deleteUser,
+    );
+    this.router.post(
+      `${this.path}${ApiRoutes.UPDATE_USER}`,
+      authMiddleware,
+      validationMiddleware(UpdateUserDto, "body"),
+      this.usersController.editUser,
     );
   }
 }

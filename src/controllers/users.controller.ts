@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { CreateUserDto } from "@dtos/users.dto";
+import { CreateUserDto, UpdateUserDto } from "@dtos/users.dto";
 import { IUser } from "@interfaces/users.interface";
 import { IProfile } from "@/interfaces/profile.interface";
 import userService from "@services/users.service";
@@ -87,6 +87,25 @@ class UsersController {
         res.status(EHttpStatusCodes.UNAUTHORIZED).json({
           message: ApiResponseMessages.UNAUTHORIZED_ACCESS,
         });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public editUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = Number(req.query.id);
+      const userData: CreateUserDto = req.body;
+      const result = await this.userService.editUser(userId, userData);
+      if (result) {
+        res
+          .status(EHttpStatusCodes.OK)
+          .json({ message: ApiResponseMessages.SUCCESS, data: result });
+      } else {
+        res
+          .status(EHttpStatusCodes.BAD_REQUEST)
+          .send({ message: ApiResponseMessages.FAILED });
       }
     } catch (error) {
       next(error);

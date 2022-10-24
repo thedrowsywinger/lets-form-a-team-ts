@@ -65,13 +65,16 @@ module.exports = {
       await transaction.commit();
     } catch (err) {
       console.error(err);
-      DB.Users.destroy({
+      DB.UserTypeMap.destroy({
         truncate: true,
       });
       DB.UserTypes.destroy({
         truncate: true,
       });
-      DB.UserTypeMap.destroy({
+      DB.Profile.destroy({
+        truncate: true,
+      });
+      DB.Users.destroy({
         truncate: true,
       });
       await transaction.rollback();
@@ -88,6 +91,18 @@ module.exports = {
        * Example:
        * await queryInterface.dropTable('users');
        */
+      DB.UserTypeMap.destroy({
+        truncate: true,
+      });
+      DB.UserTypes.destroy({
+        truncate: true,
+      });
+      DB.Profile.destroy({
+        truncate: true,
+      });
+      DB.Users.destroy({
+        truncate: true,
+      });
       await transaction.commit();
     } catch (err) {
       console.error(err);

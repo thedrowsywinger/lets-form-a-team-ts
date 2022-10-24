@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AuthController from "@controllers/auth.controller";
-import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
+import { CreateUserDto, LoginUserDto, RefreshTokenDto } from "@dtos/users.dto";
 import { Routes } from "@interfaces/routes.interface";
 import authMiddleware from "@middlewares/auth.middleware";
 import validationMiddleware from "@middlewares/validation.middleware";
@@ -26,6 +26,11 @@ class AuthRoute implements Routes {
       `${this.path}${ApiRoutes.LOGIN}`,
       validationMiddleware(LoginUserDto, "body"),
       this.authController.logIn,
+    );
+    this.router.post(
+      `${this.path}${ApiRoutes.REFRESH_ACCESS_TOKEN}`,
+      validationMiddleware(RefreshTokenDto, "body"),
+      this.authController.refreshToken,
     );
     this.router.post(
       `${this.path}logout`,
